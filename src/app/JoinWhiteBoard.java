@@ -4,13 +4,16 @@ import common.Consts;
 import common.Utils;
 import service.iUser;
 import view.JoinWhiteBoardView;
+import view.Shape;
 import view.StartAppDialog;
 
+import javax.rmi.CORBA.Util;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.Map;
 
 public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
@@ -23,13 +26,13 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     private final String hostAddress;
     private final String clientServiceName;
     private service.iWhiteboard whiteboard;
+    private HashMap<String, String> userInfo = new HashMap<>();
 
 
     protected JoinWhiteBoard(String hostAddress, int hostPort, String username) throws RemoteException {
         this.userName = username.trim();
         this.hostAddress = hostAddress;
         this.hostPort = hostPort;
-
 
         this.serverRmi = hostAddress + ":" + hostPort;
         this.clientServiceName = "Create";
@@ -61,15 +64,14 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     public void connect() {
         try {
             // RMI
-            UserInfo userInfo = new UserInfo(this.userName, this.serverRmi);
+            userInfo.put(Consts.Service.USERNAME, this.userName);
+            userInfo.put(Consts.Service.RMI_HOST, this.serverRmi);
 
             // Get the Remote Whiteboard
             whiteboard = (service.iWhiteboard) Naming.lookup("rmi://" + serverRmi + "/" + serviceName);
-            Naming.rebind("rmi://" + serverRmi + "/" + clientServiceName, this);
+            Naming.rebind("rmi://" + serverRmi + "/" + this.userName, this);
 
             // Bind Whiteboard
-            System.out.println("bind");
-
             if (whiteboard.isEmptyRoom()) {
                 Utils.popupMessage(Consts.Message.NO_ROOM, Consts.Message.EXIT);
             }
@@ -78,8 +80,11 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
                 Utils.popupMessage(Consts.Message.EXIST_NAME, Consts.Message.EXIT);
             }
 
-//            iWhiteboard.registerListener(details);
+            whiteboard.join(userInfo);
+
+            System.out.println(whiteboard);
             view = new JoinWhiteBoardView();
+            view.getPaintPanel().setWhiteboard(whiteboard);
 
         } catch (RemoteException | NotBoundException | MalformedURLException e) {
             e.printStackTrace();
@@ -103,13 +108,13 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     }
 
     @Override
-    public void load(byte[] b) throws RemoteException {
-
+    public void updateShape(Shape shape) throws RemoteException {
+        view.getPaintPanel().draw(shape);
     }
 
     @Override
-    public void reject(String str) throws RemoteException {
-
+    public void reject(String message) throws RemoteException {
+        Utils.popupMessage(message, Consts.Message.EXIT);
     }
 
     @Override
@@ -120,5 +125,13 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     @Override
     public String getUsername() throws RemoteException {
         return this.userName;
+    }
+
+    public HashMap<String, String> getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(HashMap<String, String> userInfo) {
+        this.userInfo = userInfo;
     }
 }

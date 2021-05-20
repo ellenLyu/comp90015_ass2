@@ -1,8 +1,8 @@
 package common;
 
-import java.util.List;
-
 public class Consts {
+
+    public static final String[] APPROVAL_OPTIONS = {"Approve", "Reject"};
 
     public class ServerView {
         public static final String IP_ADDRESS = "ip";
@@ -13,11 +13,15 @@ public class Consts {
 
     }
 
-
     public class Service {
         public static final String WHITEBOARD = "Whiteboard";
 
         public static final String SERVER = "Server";
+
+        public static final String USERNAME = "username";
+
+        public static final String RMI_HOST = "rmiHost";
+
     }
 
     public class PaintType {
@@ -34,8 +38,6 @@ public class Consts {
         public static final String ERASER = "Eraser";
 
     }
-
-    public static final String[] APPROVAL_OPTIONS = {"Approve", "Reject"};
 
     /**
      * Message
@@ -59,6 +61,7 @@ public class Consts {
 
         public static final String EXIST_NAME = "The name already exists, please change to another one.";
 
+        public static final String REJECT_REQUEST = "Sorry, the room manager does not approved your request.";
 
     }
 

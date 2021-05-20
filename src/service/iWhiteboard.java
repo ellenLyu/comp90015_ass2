@@ -1,20 +1,29 @@
 package service;
 
-import app.CreateWhiteBoard;
-import app.UserInfo;
+import view.Shape;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 
 public interface iWhiteboard extends Remote {
-    public void draw(byte[] b) throws RemoteException;
-    public boolean isEmptyRoom() throws RemoteException;
-    public void registerListener(UserInfo userInfo)throws RemoteException;
-    public boolean judge(String str) throws RemoteException;
-    public void removeUser(String username) throws RemoteException;
-    public void broadcast(String msg) throws RemoteException;
-    public boolean existingName(String username) throws RemoteException;
-    public void exit(String username) throws RemoteException;
-    public void end() throws RemoteException;
-    public boolean createRoom(iUser manager) throws RemoteException;
+    void update(Shape shape) throws RemoteException;
+
+    boolean isEmptyRoom() throws RemoteException;
+
+    boolean join(HashMap<String, String> userInfo) throws RemoteException;
+
+    boolean judge(String str) throws RemoteException;
+
+    void removeUser(String username) throws RemoteException;
+
+    void broadcast(String msg) throws RemoteException;
+
+    boolean existingName(String username) throws RemoteException;
+
+    void exit(String username) throws RemoteException;
+
+    void end() throws RemoteException;
+
+    boolean createRoom(iUser manager) throws RemoteException;
 }

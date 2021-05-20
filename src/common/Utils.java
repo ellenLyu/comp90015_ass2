@@ -1,11 +1,16 @@
 package common;
 
+import app.CreateWhiteBoard;
+
 import javax.swing.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class Utils {
+
+    private static final Logger logger = Logger.getLogger(Utils.class.getName());
 
     /**
      * Pop up the message on the interface
@@ -29,7 +34,7 @@ public class Utils {
         }
     }
 
-    public static boolean isNotEmpty (String s) {
+    public static boolean isNotEmpty(String s) {
         int strLen;
         if (s == null || (strLen = s.length()) == 0) {
             return false;
@@ -48,7 +53,7 @@ public class Utils {
         // Check input port
         try {
             int port = Integer.parseInt(dialogInput.get(Consts.ServerView.PORT));
-            System.out.println(port);
+            logger.info("Port: " + port);
         } catch (NumberFormatException e) {
             Utils.popupMessage(Consts.Message.INVALID_PORT, Consts.Message.EXIT);
             return false;
@@ -57,7 +62,7 @@ public class Utils {
         // Check input ip address
         try {
             InetAddress serverIP = InetAddress.getByName(dialogInput.get(Consts.ServerView.IP_ADDRESS));
-            System.out.println(serverIP);
+            logger.info("Server IP: " + serverIP);
         } catch (UnknownHostException e) {
             Utils.popupMessage(Consts.Message.INVALID_IP, Consts.Message.EXIT);
             return false;
@@ -65,7 +70,7 @@ public class Utils {
 
         // Check input ip address
         String username = dialogInput.get(Consts.ServerView.USERNAME);
-        System.out.println(username);
+        logger.info("Username: " + username);
         if (!Utils.isNotEmpty(username)) {
             Utils.popupMessage(Consts.Message.INVALID_USERNAME, Consts.Message.EXIT);
             return false;

@@ -1,18 +1,16 @@
 package view;
 
+import common.Consts.PaintType;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import common.Consts.PaintType;
 
 public class ToolPanel extends JPanel {
 
-    private JToolBar toolBar;
+    private final JToolBar toolBar;
 
-    private PaintPanel paintPanel;
+    private final PaintPanel paintPanel;
 
     private Color selectedColor = Color.GRAY;
 

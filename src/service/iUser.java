@@ -1,16 +1,24 @@
 package service;
 
+import view.Shape;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface iUser extends Remote {
 
-    public void messageFromServer(String message) throws RemoteException;
-    public void updateUserList(String[] currentUsers) throws RemoteException;
-    public boolean approve(String username) throws RemoteException;
-    public void load(byte[] b) throws RemoteException;
-    public void reject(String str)throws RemoteException;
-    public void info(String str) throws RemoteException;
-    public String getUsername() throws RemoteException;
+    void messageFromServer(String message) throws RemoteException;
+
+    void updateUserList(String[] currentUsers) throws RemoteException;
+
+    boolean approve(String username) throws RemoteException;
+
+    void updateShape(Shape shape) throws RemoteException;
+
+    void reject(String message) throws RemoteException;
+
+    void info(String str) throws RemoteException;
+
+    String getUsername() throws RemoteException;
 
 }

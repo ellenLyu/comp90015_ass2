@@ -11,9 +11,9 @@ public class CreateWhiteBoardView {
 
     private final PaintPanel paintPanel;
 
-    private ToolPanel toolPanel;
+    private final ToolPanel toolPanel;
 
-    private JTextArea errorMessageArea;
+    private final JTextArea errorMessageArea;
 
 
     public CreateWhiteBoardView() {
@@ -25,7 +25,7 @@ public class CreateWhiteBoardView {
 
         paintPanel = new PaintPanel();
         paintPanel.setBackground(Color.WHITE);
-        paintPanel.setBounds(5,100,800,600);
+        paintPanel.setBounds(5, 100, 800, 600);
         frame.add(paintPanel);
 
         toolPanel = new ToolPanel(paintPanel);
@@ -96,5 +96,9 @@ public class CreateWhiteBoardView {
         });
 
         frame.setJMenuBar(menuBar);
+    }
+
+    public PaintPanel getPaintPanel() {
+        return paintPanel;
     }
 }

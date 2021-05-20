@@ -1,10 +1,10 @@
 package service.impl;
 
 import app.CreateWhiteBoard;
-import app.UserInfo;
-import com.sun.tools.internal.ws.wsdl.document.soap.SOAPUse;
+import common.Consts;
 import service.iUser;
 import service.iWhiteboard;
+import view.Shape;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -15,35 +15,53 @@ import java.util.HashMap;
 
 public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
+    private final HashMap<String, iUser> users;
     private iUser manager;
-
-    private HashMap<String, iUser> users;
 
     public WhiteboardImpl() throws RemoteException {
         super();
         users = new HashMap<>();
     }
 
+    /**
+     * Synchronize the shape to other clients
+     *
+     * @param shape
+     * @throws RemoteException
+     */
     @Override
-    public void draw(byte[] b) throws RemoteException {
+    public void update(Shape shape) throws RemoteException {
 
+        this.manager.updateShape(shape);
+
+        for (iUser user : users.values()) {
+            try {
+                user.updateShape(shape);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
-
     @Override
-    public void registerListener(UserInfo userInfo) throws RemoteException {
+    public boolean join(HashMap<String, String> userInfo) throws RemoteException {
         try {
-            iUser client = (iUser) Naming.lookup("rmi://" + userInfo.getRmiHost() + "/" + "Create");
-            manager.approve(userInfo.getUsername());
+            iUser client = (iUser) Naming.lookup("rmi://" +
+                    userInfo.get(Consts.Service.RMI_HOST) + "/" + userInfo.get(Consts.Service.USERNAME));
 
-            users.put(userInfo.getUsername(), client);
+            boolean isApproved = manager.approve(userInfo.get(Consts.Service.USERNAME));
 
-
-        } catch (MalformedURLException e) {
+            if (isApproved) {
+                users.put(Consts.Service.USERNAME, client);
+                return true;
+            } else {
+                client.reject(Consts.Message.REJECT_REQUEST);
+                return false;
+            }
+        } catch (MalformedURLException | NotBoundException e) {
             e.printStackTrace();
-        } catch (NotBoundException e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
@@ -78,6 +96,7 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     /**
      * Add the manager user (CreateWhiteBoard) to the room/
+     *
      * @param manager
      * @return
      * @throws RemoteException
@@ -100,6 +119,7 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     /**
      * Check whether the room is empty
+     *
      * @return true if the room is empty (no manager user)
      * @throws RemoteException
      */

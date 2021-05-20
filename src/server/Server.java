@@ -1,10 +1,8 @@
 package server;
 
-import java.net.InetAddress;
-
 import common.Consts;
-import service.impl.WhiteboardImpl;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
@@ -28,7 +26,7 @@ public class Server extends UnicastRemoteObject {
             int port = Integer.parseInt(args[0]);
             Registry registry = LocateRegistry.createRegistry(port);
 
-            String hostname =  InetAddress.getLocalHost().getHostAddress() + ":" + args[0];
+            String hostname = InetAddress.getLocalHost().getHostAddress() + ":" + args[0];
             System.out.println(hostname);
             Naming.bind("rmi://" + hostname + "/" + Consts.Service.SERVER, server);
 
@@ -37,12 +35,8 @@ public class Server extends UnicastRemoteObject {
         } catch (NumberFormatException nfe) {
             System.out.println("port is invalid");
             nfe.printStackTrace();
-        } catch (RemoteException | UnknownHostException e) {
+        } catch (RemoteException | UnknownHostException | MalformedURLException | AlreadyBoundException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (AlreadyBoundException e) {
             e.printStackTrace();
         }
 

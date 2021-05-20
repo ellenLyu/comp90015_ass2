@@ -2,6 +2,7 @@ package view;
 
 import java.awt.*;
 import java.io.Serializable;
+import java.rmi.Remote;
 
 public class Shape implements Serializable {
 
@@ -39,5 +40,36 @@ public class Shape implements Serializable {
         this.text = text;
     }
 
+    public int getX() {
+        return x;
+    }
 
+    public int getY() {
+        return y;
+    }
+
+    public int getX1() {
+        return x1;
+    }
+
+    public int getY1() {
+        return y1;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    @Override
+    public String toString(){
+        return type + " " + color;
+    }
 }
