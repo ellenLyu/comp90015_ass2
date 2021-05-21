@@ -2,6 +2,8 @@ package service.impl;
 
 import app.CreateWhiteBoard;
 import common.Consts;
+import common.Consts.Service;
+import java.util.logging.Logger;
 import service.iUser;
 import service.iWhiteboard;
 import view.Shape;
@@ -15,6 +17,7 @@ import java.util.HashMap;
 
 public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
+    private static final Logger logger = Logger.getLogger(WhiteboardImpl.class.getName());
     private final HashMap<String, iUser> users;
     private iUser manager;
 
@@ -25,25 +28,35 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     /**
      * Synchronize the shape to other clients
-     *
-     * @param shape
-     * @throws RemoteException
+     * @param shape the target shape
+     * @param userInfo user information of user who draws the shape
      */
     @Override
-    public void update(Shape shape) throws RemoteException {
+    public void update(Shape shape, HashMap<String, String> userInfo) throws RemoteException {
 
-        this.manager.updateShape(shape);
+        logger.info(shape + "");
+
+        if (!userInfo.get(Service.USERNAME).equals(this.manager.getUsername())) {
+            this.manager.updateShape(shape);
+        }
 
         for (iUser user : users.values()) {
-            try {
-                user.updateShape(shape);
-            } catch (RemoteException e) {
-                e.printStackTrace();
+            if (!userInfo.get(Service.USERNAME).equals(user.getUsername())) {
+                try {
+                    user.updateShape(shape);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
 
+    /**
+     * Join JoinWhiteBoard user to the whiteboard room
+     * @param userInfo user information of JoinWhiteBoard user
+     * @return True if can join the room
+     */
     @Override
     public boolean join(HashMap<String, String> userInfo) throws RemoteException {
         try {
@@ -80,6 +93,11 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     }
 
+    /**
+     * Check whether the name is already existing in this room
+     * @param username target username
+     * @return true is existing
+     */
     public boolean existingName(String username) throws RemoteException {
         return manager.getUsername().equals(username) || users.containsKey(username);
     }
@@ -95,15 +113,13 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
     }
 
     /**
-     * Add the manager user (CreateWhiteBoard) to the room/
-     *
-     * @param manager
-     * @return
+     * Add the manager user (CreateWhiteBoard) to the room
+     * @param manager CreateWhiteBoard object
+     * @return true if created
      * @throws RemoteException
      */
     @Override
     public boolean createRoom(iUser manager) throws RemoteException {
-
 
         if (this.manager != null) {
             return false;
@@ -119,8 +135,7 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     /**
      * Check whether the room is empty
-     *
-     * @return true if the room is empty (no manager user)
+     * @return true if the room is empty (non-manager user)
      * @throws RemoteException
      */
     @Override

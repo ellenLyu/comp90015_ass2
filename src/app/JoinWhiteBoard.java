@@ -85,6 +85,8 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
             System.out.println(whiteboard);
             view = new JoinWhiteBoardView();
             view.getPaintPanel().setWhiteboard(whiteboard);
+            view.getPaintPanel().setUserInfo(userInfo);
+
 
         } catch (RemoteException | NotBoundException | MalformedURLException e) {
             e.printStackTrace();

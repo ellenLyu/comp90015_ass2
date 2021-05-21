@@ -6,7 +6,10 @@ import java.rmi.Remote;
 
 public class Shape implements Serializable {
 
-    private int x, y, x1, y1;
+    private int x;
+    private int y;
+    private int x1;
+    private int y1;
 
     private String type;
 
@@ -70,6 +73,7 @@ public class Shape implements Serializable {
 
     @Override
     public String toString(){
-        return type + " " + color;
+        return "Type: " + type
+            + " x: " + x + " y: " + y + " x1: " + x1 + " y1: " + y1 + color;
     }
 }

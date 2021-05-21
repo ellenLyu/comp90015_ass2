@@ -7,7 +7,7 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 
 public interface iWhiteboard extends Remote {
-    void update(Shape shape) throws RemoteException;
+    void update(Shape shape, HashMap<String, String> userInfo) throws RemoteException;
 
     boolean isEmptyRoom() throws RemoteException;
 

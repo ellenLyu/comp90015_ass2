@@ -88,7 +88,11 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
             // Get the Remote Whiteboard
             logger.info("Initializing the whiteboard.");
             view = new CreateWhiteBoardView();
+
             view.getPaintPanel().setWhiteboard(whiteboard);
+            view.getPaintPanel().setUserInfo(userInfo);
+            System.out.println(this);
+
 
 
 

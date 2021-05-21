@@ -2,6 +2,8 @@ package view;
 
 import common.Consts.PaintType;
 import common.Utils;
+import java.util.HashMap;
+import service.iUser;
 import service.iWhiteboard;
 
 import javax.swing.*;
@@ -25,6 +27,8 @@ public class PaintPanel extends JPanel {
     private Color selectedColor = Color.BLACK;
 
     private iWhiteboard whiteboard;
+    private HashMap<String, String> userInfo;
+
 
     public PaintPanel() {
 
@@ -81,6 +85,13 @@ public class PaintPanel extends JPanel {
     }
 
 
+    /**
+     * Draw the shape by this user
+     * @param x, y, x1, y1
+     * @param type type of the shape
+     * @param color color of the shape
+     * @throws RemoteException
+     */
     private void draw(int x, int y, int x1, int y1, String type, Color color) throws RemoteException {
         Graphics2D g = (Graphics2D) getGraphics();
         g.setColor(color);
@@ -120,64 +131,55 @@ public class PaintPanel extends JPanel {
                     throw new IllegalStateException("Unexpected value: " + type);
             }
         }
-        shapeList.add(shape);
-        System.out.println(shapeList);
+        this.shapeList.add(shape);
 
         // Synchronize the shape to other clients
-        whiteboard.update(shape);
+//        logger.info("Updated Shape " + shape);
+        whiteboard.update(shape, this.userInfo);
+
+        System.out.println(shapeList);
     }
 
-    public void draw(Shape updateShape) {
+    /**
+     * Update the shape drawn by other users
+     * @param shape the shape object by other users
+     */
+    public void draw(Shape shape) {
         System.out.println("Update the shape from other clients");
-
+        System.out.println(shape);
         Graphics2D g = (Graphics2D) getGraphics();
-        Color color = updateShape.getColor();
-        int x = updateShape.getX();
-        int y = updateShape.getY();
-        int x1 = updateShape.getX1();
-        int y1 = updateShape.getY1();
-        String type = updateShape.getType();
-        String text = updateShape.getText();
+        Color color = shape.getColor();
+        int x = shape.getX();
+        int y = shape.getY();
+        int x1 = shape.getX1();
+        int y1 = shape.getY1();
+        String type = shape.getType();
+        String text = shape.getText();
+
+//        logger.info(shape + "");
 
         g.setColor(color);
 
-        Shape shape;
-
         if (PaintType.TEXT.equals(type)) {
             g.drawString(text, x, y);
-            shape = new Shape(x, y, type, color, text);
         } else {
 
-            int height = Math.abs(y1 - y);
-            int width = Math.abs(x1 - x);
-
-            switch (this.type) {
+            switch (type) {
                 case PaintType.LINE:
                     g.drawLine(x, y, x1, y1);
-                    shape = new Shape(x, y, x1, y1, type, color);
                     break;
                 case PaintType.RECT:
-                    g.drawRect(Math.min(x, x1), Math.min(y, y1), width, height);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height,
-                            type, color);
+                    g.drawRect(x, y, x1, y1);
                     break;
                 case PaintType.CIRCLE:
-                    int round = Math.max(width, height);
-                    g.drawOval(Math.min(x, x1), Math.min(y, y1), round, round);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), round, round,
-                            type, color);
-                    break;
                 case PaintType.OVAL:
-                    g.drawOval(Math.min(x, x1), Math.min(y, y1), width, height);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height,
-                            type, color);
+                    g.drawOval(x, y, x1, y1);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + type);
             }
         }
-//        shapeList.add(shape);
-//        System.out.println(shapeList);
+        shapeList.add(shape);
     }
 
 
@@ -197,5 +199,13 @@ public class PaintPanel extends JPanel {
 
     public void setWhiteboard(iWhiteboard whiteboard) {
         this.whiteboard = whiteboard;
+    }
+
+    public HashMap<String, String> getUserInfo() {
+        return userInfo;
+    }
+
+    public void setUserInfo(HashMap<String, String> userInfo) {
+        this.userInfo = userInfo;
     }
 }
