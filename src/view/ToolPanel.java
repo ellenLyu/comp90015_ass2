@@ -19,12 +19,13 @@ public class ToolPanel extends JPanel {
         this.paintPanel = paintPanel;
 
         setBorder(new EmptyBorder(5, 5, 5, 5));
-        setLayout(null);
+//        setLayout(null);
 
         toolBar = new JToolBar();
-        toolBar.setBounds(0, 0, 500, 100);
+//        toolBar.setBounds(0, 0, 500, 20);
         toolBar.setFloatable(false);
 
+        setBackground(Color.lightGray);
         add(toolBar);
         addButtons();
     }

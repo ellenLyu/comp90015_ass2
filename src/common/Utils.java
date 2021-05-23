@@ -1,7 +1,5 @@
 package common;
 
-import app.CreateWhiteBoard;
-
 import javax.swing.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,7 +17,7 @@ public class Utils {
      * @param mode    EXIT or BACK
      * @param args    values for placeholders in the message
      */
-    public static void popupMessage(String message, int mode, String... args) {
+    public static void popupErrMessage(String message, int mode, String... args) {
 
         for (String placeholder : args) {
             message = message.replaceFirst("#", placeholder);
@@ -28,6 +26,19 @@ public class Utils {
         JOptionPane.showConfirmDialog(null,
                 message, "Error Message",
                 JOptionPane.OK_CANCEL_OPTION);
+
+        if (Consts.Message.EXIT == mode) {
+            System.exit(0);
+        }
+    }
+
+    public static void popupMessage(String message, int mode, String... args) {
+
+        for (String placeholder : args) {
+            message = message.replaceFirst("#", placeholder);
+        }
+
+        JOptionPane.showMessageDialog(null, message);
 
         if (Consts.Message.EXIT == mode) {
             System.exit(0);
@@ -55,7 +66,7 @@ public class Utils {
             int port = Integer.parseInt(dialogInput.get(Consts.ServerView.PORT));
             logger.info("Port: " + port);
         } catch (NumberFormatException e) {
-            Utils.popupMessage(Consts.Message.INVALID_PORT, Consts.Message.EXIT);
+            Utils.popupErrMessage(Consts.Message.INVALID_PORT, Consts.Message.EXIT);
             return false;
         }
 
@@ -64,7 +75,7 @@ public class Utils {
             InetAddress serverIP = InetAddress.getByName(dialogInput.get(Consts.ServerView.IP_ADDRESS));
             logger.info("Server IP: " + serverIP);
         } catch (UnknownHostException e) {
-            Utils.popupMessage(Consts.Message.INVALID_IP, Consts.Message.EXIT);
+            Utils.popupErrMessage(Consts.Message.INVALID_IP, Consts.Message.EXIT);
             return false;
         }
 
@@ -72,7 +83,7 @@ public class Utils {
         String username = dialogInput.get(Consts.ServerView.USERNAME);
         logger.info("Username: " + username);
         if (!Utils.isNotEmpty(username)) {
-            Utils.popupMessage(Consts.Message.INVALID_USERNAME, Consts.Message.EXIT);
+            Utils.popupErrMessage(Consts.Message.INVALID_USERNAME, Consts.Message.EXIT);
             return false;
         }
 

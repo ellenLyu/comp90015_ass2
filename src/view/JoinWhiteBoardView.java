@@ -1,7 +1,10 @@
 package view;
 
+import service.iWhiteboard;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 
 public class JoinWhiteBoardView {
 
@@ -11,21 +14,65 @@ public class JoinWhiteBoardView {
 
     private final ToolPanel toolPanel;
 
+    private final UserListPanel userListPanel;
+
+    private final ChatPanel chatPanel;
+
     private final JTextArea errorMessageArea;
 
     public JoinWhiteBoardView() {
+
         frame = new JFrame();
         frame.setTitle("Whiteboard - Join");
-        frame.setBounds(200, 200, 800, 800);
+        frame.setBounds(200, 200, 800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        gridBagLayout.columnWidths = new int[]{530, 260};
+        gridBagLayout.rowHeights = new int[]{40, 280, 280};
+        gridBagLayout.columnWeights = new double[]{1.0, 0.6};
+        gridBagLayout.rowWeights = new double[]{0.1, 1.0, 1.0};
+        frame.getContentPane().setLayout(gridBagLayout);
+
+        GridBagConstraints gbc_PaintPanel = new GridBagConstraints();
+        gbc_PaintPanel.fill = GridBagConstraints.BOTH;
+        gbc_PaintPanel.gridx = 0;
+        gbc_PaintPanel.gridy = 1;
+        gbc_PaintPanel.gridwidth = 1;
+        gbc_PaintPanel.gridheight = 2;
         paintPanel = new PaintPanel();
         paintPanel.setBackground(Color.WHITE);
-        paintPanel.setBounds(5, 100, 800, 600);
-        frame.add(paintPanel);
+//        paintPanel.setBounds(0, 0, 500, 500);
+        frame.getContentPane().add(paintPanel, gbc_PaintPanel);
 
+        GridBagConstraints gbc_ToolPanel = new GridBagConstraints();
+        gbc_ToolPanel.fill = GridBagConstraints.BOTH;
+        gbc_ToolPanel.anchor = GridBagConstraints.WEST;
+        gbc_ToolPanel.gridx = 0;
+        gbc_ToolPanel.gridy = 0;
+        gbc_ToolPanel.gridwidth = 1;
         toolPanel = new ToolPanel(paintPanel);
-        frame.add(toolPanel);
+        toolPanel.setBounds(0, 0,  500, 30);
+        toolPanel.setVisible(true);
+        frame.getContentPane().add(toolPanel, gbc_ToolPanel);
+
+        GridBagConstraints gbc_ListPanel = new GridBagConstraints();
+        gbc_ListPanel.fill = GridBagConstraints.BOTH;
+        gbc_ListPanel.gridx = 1;
+        gbc_ListPanel.gridy = 1;
+        gbc_ListPanel.gridwidth = 1;
+        gbc_ListPanel.gridheight = 1;
+        userListPanel = new UserListPanel(false);
+        frame.getContentPane().add(userListPanel, gbc_ListPanel);
+
+        GridBagConstraints gbc_ChatPanel = new GridBagConstraints();
+        gbc_ChatPanel.fill = GridBagConstraints.BOTH;
+        gbc_ChatPanel.gridx = 1;
+        gbc_ChatPanel.gridy = 2;
+        gbc_ChatPanel.gridwidth = 1;
+        gbc_ChatPanel.gridheight = 1;
+        chatPanel = new ChatPanel();
+        frame.getContentPane().add(chatPanel, gbc_ChatPanel);
 
         errorMessageArea = new JTextArea();
         errorMessageArea.setBounds(10, 284, 434, 91);
@@ -35,5 +82,28 @@ public class JoinWhiteBoardView {
 
     public PaintPanel getPaintPanel() {
         return this.paintPanel;
+    }
+
+    public void setWhiteboard(iWhiteboard whiteboard) {
+        this.paintPanel.setWhiteboard(whiteboard);
+        this.userListPanel.setWhiteboard(whiteboard);
+    }
+
+    public void setUserinfo(HashMap<String, String> userInfo) {
+        this.paintPanel.setUserInfo(userInfo);
+        this.chatPanel.setUserInfo(userInfo);
+
+    }
+
+    public void appendChat(String type, String from, String message) {
+        chatPanel.appendMessage(type,from, message);
+    }
+
+    public void setVisible(boolean visible) {
+        frame.setVisible(true);
+    }
+
+    public void updateList(DefaultListModel<String> model) {
+        userListPanel.updateList(model);
     }
 }

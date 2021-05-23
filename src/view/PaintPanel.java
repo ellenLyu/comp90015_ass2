@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +35,7 @@ public class PaintPanel extends JPanel {
 
         shapeList = new ArrayList<>();
 
+        setPreferredSize(new Dimension(480, 500));
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
         addMouseListener(new MouseListener() {
@@ -145,7 +147,6 @@ public class PaintPanel extends JPanel {
      * @param shape the shape object by other users
      */
     public void draw(Shape shape) {
-        System.out.println("Update the shape from other clients");
         System.out.println(shape);
         Graphics2D g = (Graphics2D) getGraphics();
         Color color = shape.getColor();
@@ -158,6 +159,7 @@ public class PaintPanel extends JPanel {
 
 //        logger.info(shape + "");
 
+        System.out.println(g);
         g.setColor(color);
 
         if (PaintType.TEXT.equals(type)) {
@@ -182,7 +184,17 @@ public class PaintPanel extends JPanel {
         shapeList.add(shape);
     }
 
+    /**
+     * Loads a list of shapes, for the total canvas
+     * @param shapeList shape list
+     */
+    public void loads(List<Shape> shapeList) {
+        logger.log(Level.INFO, "Loads the whole canvas. ");
 
+        for (Shape shape : shapeList ) {
+            draw(shape);
+        }
+    }
     public void setType(String type) {
         logger.log(Level.INFO, "Type is changed to " + type);
         this.type = type;
@@ -207,5 +219,9 @@ public class PaintPanel extends JPanel {
 
     public void setUserInfo(HashMap<String, String> userInfo) {
         this.userInfo = userInfo;
+    }
+
+    public ArrayList<Shape> getShapeList() {
+        return shapeList;
     }
 }

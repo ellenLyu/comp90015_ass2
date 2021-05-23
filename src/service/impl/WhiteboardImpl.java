@@ -3,11 +3,14 @@ package service.impl;
 import app.CreateWhiteBoard;
 import common.Consts;
 import common.Consts.Service;
+
+import java.util.Map;
 import java.util.logging.Logger;
 import service.iUser;
 import service.iWhiteboard;
 import view.Shape;
 
+import javax.swing.*;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -19,6 +22,8 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     private static final Logger logger = Logger.getLogger(WhiteboardImpl.class.getName());
     private final HashMap<String, iUser> users;
+    private final DefaultListModel<String> usernameList = new DefaultListModel<>();
+
     private iUser manager;
 
     public WhiteboardImpl() throws RemoteException {
@@ -58,23 +63,30 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
      * @return True if can join the room
      */
     @Override
-    public boolean join(HashMap<String, String> userInfo) throws RemoteException {
+    public Map<String, Object> join(HashMap<String, String> userInfo) throws RemoteException {
         try {
             iUser client = (iUser) Naming.lookup("rmi://" +
                     userInfo.get(Consts.Service.RMI_HOST) + "/" + userInfo.get(Consts.Service.USERNAME));
 
             boolean isApproved = manager.approve(userInfo.get(Consts.Service.USERNAME));
 
+            // The JoinWhiteBoard is approved to join
             if (isApproved) {
-                users.put(Consts.Service.USERNAME, client);
-                return true;
+                Map<String, Object> res = new HashMap<>();
+                users.put(userInfo.get(Consts.Service.USERNAME), client);
+                usernameList.addElement(Service.CLIENT_NAME + userInfo.get(Consts.Service.USERNAME));
+
+                res.put("ShapeList", manager.getShapeList());
+                res.put("UsernameList", this.usernameList);
+                return res;
             } else {
-                client.reject(Consts.Message.REJECT_REQUEST);
-                return false;
+                // been rejected
+                client.leave(Consts.Message.REJECT_REQUEST);
+                return null;
             }
         } catch (MalformedURLException | NotBoundException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
@@ -85,12 +97,37 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
     @Override
     public void removeUser(String username) throws RemoteException {
-
+        iUser client = users.get(username);
+        client.leave(Consts.Message.BEEN_KICKED);
+        usernameList.removeElement(username);
+        manager.popupMessage(Consts.Message.SUCC_KICKED, Consts.Message.BACK, username);
+        users.remove(username);
+        logger.info("User " + username + " has been kicked out the room.");
     }
 
     @Override
-    public void broadcast(String msg) throws RemoteException {
+    public void broadcast(String from, String message) throws RemoteException {
+        String type = "";
+        System.out.println(from);
+        System.out.println(message);
+        if (from.equals(manager.getUsername())) {
+            type = Service.MGR_NAME ;
+        } else if(from.equals(Service.SERVER_NAME)) {
+            type = Service.SERVER_NAME;
+            from = "";
+        } else {
+            type = Service.USERNAME;
+        }
 
+        if (!from.equals(this.manager.getUsername())) {
+            manager.rcvChatMsg(type, from, message);
+        }
+
+        for (iUser user : users.values()) {
+            if (!from.equals(user.getUsername())) {
+                user.rcvChatMsg(type, from, message);
+            }
+        }
     }
 
     /**
@@ -127,6 +164,8 @@ public class WhiteboardImpl extends UnicastRemoteObject implements iWhiteboard {
 
         if (manager instanceof CreateWhiteBoard) {
             this.manager = manager;
+            usernameList.addElement(Service.MGR_NAME + manager.getUsername());
+            manager.updateUserList(usernameList);
             System.out.println("Manager " + manager.getUsername() + " has created the room.");
             return true;
         }

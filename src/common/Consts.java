@@ -22,6 +22,13 @@ public class Consts {
 
         public static final String RMI_HOST = "rmiHost";
 
+        public static final String MGR_NAME = "[Manager]: ";
+
+        public static final String CLIENT_NAME = "[User]: ";
+
+        public static final String SERVER_NAME = "[Server]: ";
+
+
     }
 
     public class PaintType {
@@ -62,6 +69,11 @@ public class Consts {
         public static final String EXIST_NAME = "The name already exists, please change to another one.";
 
         public static final String REJECT_REQUEST = "Sorry, the room manager does not approved your request.";
+
+        public static final String BEEN_KICKED = "Sorry, you have been kicked out by the room manager";
+
+        public static final String SUCC_KICKED = "User # has been kicked out.";
+
 
     }
 

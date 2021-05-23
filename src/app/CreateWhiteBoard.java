@@ -3,6 +3,10 @@ package app;
 import common.Consts;
 import common.Utils;
 import service.iUser;
+import service.iWhiteboard;
+import service.impl.ChatRunable;
+import service.impl.ShapeRunnable;
+import service.impl.ThreadPool;
 import service.impl.WhiteboardImpl;
 import view.CreateWhiteBoardView;
 import view.Shape;
@@ -14,7 +18,9 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -29,8 +35,9 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
     private final int hostPort;
     private final String hostAddress;
     private final String clientServiceName;
-    private service.iWhiteboard whiteboard;
+    private iWhiteboard whiteboard;
     private HashMap<String, String> userInfo = new HashMap<>();
+    private ThreadPool threadPool;
 
 
     public CreateWhiteBoard(String hostAddress, int hostPort, String username) throws RemoteException {
@@ -83,41 +90,30 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
             System.out.println(whiteboard);
 
             // Create the room
+            threadPool = new ThreadPool(3);
+            view = new CreateWhiteBoardView();
+            view.setWhiteboard(whiteboard);
+            view.setUserinfo(userInfo);
+
             whiteboard.createRoom(this);
 
             // Get the Remote Whiteboard
             logger.info("Initializing the whiteboard.");
-            view = new CreateWhiteBoardView();
 
-            view.getPaintPanel().setWhiteboard(whiteboard);
-            view.getPaintPanel().setUserInfo(userInfo);
             System.out.println(this);
-
-
-
-
-//            Naming.rebind("rmi://" + serverRmi + "/" + clientServiceName, this);
-//            whiteboard = (iWhiteboard) Naming.lookup("rmi://" + serverRmi + "/" + serviceName);
-
-
-//      GUI.setUsername(userName);
-//      GUI.getpanel().setwb(wb);
 
         } catch (RemoteException | MalformedURLException | AlreadyBoundException e) {
             e.printStackTrace();
-            Utils.popupMessage(Consts.Message.CONN_FAILED, Consts.Message.EXIT);
+            Utils.popupErrMessage(Consts.Message.CONN_FAILED, Consts.Message.EXIT);
         }
     }
 
     @Override
-    public void messageFromServer(String message) throws RemoteException {
-
+    public void rcvChatMsg(String type, String from, String message) throws RemoteException {
+        threadPool.execute(new ChatRunable(view, type, from, message));
     }
 
-    @Override
-    public void updateUserList(String[] currentUsers) throws RemoteException {
 
-    }
 
     @Override
     public boolean approve(String username) throws RemoteException {
@@ -130,18 +126,28 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
     }
 
     @Override
+    public void updateUserList(DefaultListModel<String> model) throws RemoteException {
+        view.updateList(model);
+    }
+
+    @Override
     public void updateShape(Shape shape) throws RemoteException {
         view.getPaintPanel().draw(shape);
     }
 
     @Override
-    public void reject(String str) throws RemoteException {
+    public void load(List<Shape> shapeList) throws RemoteException {
+        view.getPaintPanel().loads(shapeList);
+    }
+
+    @Override
+    public void leave(String str) throws RemoteException {
 
     }
 
     @Override
-    public void info(String str) throws RemoteException {
-
+    public void popupMessage(String message, int mode, String... args) throws RemoteException {
+        Utils.popupMessage(message, mode, args);
     }
 
     @Override
@@ -156,5 +162,14 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
 
     public void setUserInfo(HashMap<String, String> userInfo) {
         this.userInfo = userInfo;
+    }
+
+    public ArrayList<Shape> getShapeList() {
+//        return null;
+        return this.view.getPaintPanel().getShapeList();
+    }
+
+    public CreateWhiteBoardView getView() {
+        return view;
     }
 }

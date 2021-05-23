@@ -3,22 +3,27 @@ package app;
 import common.Consts;
 import common.Utils;
 import service.iUser;
+import service.impl.ChatRunable;
+import service.impl.ShapeRunnable;
+import service.impl.ThreadPool;
+import service.impl.UserListRunnable;
 import view.JoinWhiteBoardView;
 import view.Shape;
 import view.StartAppDialog;
 
-import javax.rmi.CORBA.Util;
+import javax.swing.*;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
 
-    private static JoinWhiteBoardView view;
+    private JoinWhiteBoardView view;
     private final String userName;
     private final String serverRmi;
     private final String serviceName;
@@ -27,6 +32,7 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     private final String clientServiceName;
     private service.iWhiteboard whiteboard;
     private HashMap<String, String> userInfo = new HashMap<>();
+    private ThreadPool threadPool;
 
 
     protected JoinWhiteBoard(String hostAddress, int hostPort, String username) throws RemoteException {
@@ -73,40 +79,47 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
 
             // Bind Whiteboard
             if (whiteboard.isEmptyRoom()) {
-                Utils.popupMessage(Consts.Message.NO_ROOM, Consts.Message.EXIT);
+                Utils.popupErrMessage(Consts.Message.NO_ROOM, Consts.Message.EXIT);
             }
 
             if (whiteboard.existingName(this.userName)) {
-                Utils.popupMessage(Consts.Message.EXIST_NAME, Consts.Message.EXIT);
+                Utils.popupErrMessage(Consts.Message.EXIST_NAME, Consts.Message.EXIT);
             }
 
-            whiteboard.join(userInfo);
+            Map<String, Object> loadDataList = whiteboard.join(userInfo);
 
-            System.out.println(whiteboard);
+            threadPool = new ThreadPool(3);
             view = new JoinWhiteBoardView();
-            view.getPaintPanel().setWhiteboard(whiteboard);
-            view.getPaintPanel().setUserInfo(userInfo);
+            view.setWhiteboard(whiteboard);
+            view.setUserinfo(userInfo);
+            view.setVisible(true);
+
+            threadPool.execute(new ShapeRunnable(this, (List<Shape>) loadDataList.get("ShapeList")));
+            threadPool.execute(new UserListRunnable(this, (DefaultListModel<String>) loadDataList.get("UsernameList")));
+            System.out.println(whiteboard);
 
 
         } catch (RemoteException | NotBoundException | MalformedURLException e) {
             e.printStackTrace();
-            Utils.popupMessage(Consts.Message.CONN_FAILED, Consts.Message.EXIT);
+            Utils.popupErrMessage(Consts.Message.CONN_FAILED, Consts.Message.EXIT);
         }
     }
 
     @Override
-    public void messageFromServer(String message) throws RemoteException {
-
+    public void rcvChatMsg(String type, String from, String message) throws RemoteException {
+        threadPool.execute(new ChatRunable(view, type, from, message));
     }
 
-    @Override
-    public void updateUserList(String[] currentUsers) throws RemoteException {
 
-    }
 
     @Override
     public boolean approve(String str) throws RemoteException {
         return false;
+    }
+
+    @Override
+    public void updateUserList(DefaultListModel<String> model) throws RemoteException {
+        view.updateList(model);
     }
 
     @Override
@@ -115,12 +128,22 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     }
 
     @Override
-    public void reject(String message) throws RemoteException {
-        Utils.popupMessage(message, Consts.Message.EXIT);
+    public void load(List<Shape> shapeList) throws RemoteException {
+        view.getPaintPanel().loads(shapeList);
     }
 
     @Override
-    public void info(String str) throws RemoteException {
+    public void leave(String message) throws RemoteException {
+        try {
+            Naming.unbind("rmi://" + serverRmi + "/" + this.userName);
+        } catch (NotBoundException | MalformedURLException e) {
+            e.printStackTrace();
+        }
+        Utils.popupErrMessage(message, Consts.Message.EXIT);
+    }
+
+    @Override
+    public void popupMessage(String str, int mode, String... args) throws RemoteException {
 
     }
 
@@ -129,11 +152,20 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
         return this.userName;
     }
 
+    @Override
+    public List<Shape> getShapeList() {
+        return view.getPaintPanel().getShapeList();
+    }
+
     public HashMap<String, String> getUserInfo() {
         return userInfo;
     }
 
     public void setUserInfo(HashMap<String, String> userInfo) {
         this.userInfo = userInfo;
+    }
+
+    public JoinWhiteBoardView getView() {
+        return view;
     }
 }
