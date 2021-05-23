@@ -22,11 +22,15 @@ public class Consts {
 
         public static final String RMI_HOST = "rmiHost";
 
-        public static final String MGR_NAME = "[Manager]: ";
+        public static final String MGR_NAME = "[Manager] ";
 
-        public static final String CLIENT_NAME = "[User]: ";
+        public static final String CLIENT_NAME = "[User] ";
 
-        public static final String SERVER_NAME = "[Server]: ";
+        public static final String SERVER_NAME = "[Server] ";
+
+        public static final String PNG = "png";
+
+        public static final String SER = "ser";
 
 
     }
@@ -73,6 +77,12 @@ public class Consts {
         public static final String BEEN_KICKED = "Sorry, you have been kicked out by the room manager";
 
         public static final String SUCC_KICKED = "User # has been kicked out.";
+
+        public static final String SUCC_SAVED_AS = "Successfully saved as file: #";
+
+        public static final String SUCC_SAVED = "Successfully saved!";
+
+        public static final String CLOSED_ROOM = "The room manager has closed the room.";
 
 
     }

@@ -2,8 +2,6 @@ package view;
 
 import common.Consts.PaintType;
 import common.Utils;
-import java.util.HashMap;
-import service.iUser;
 import service.iWhiteboard;
 
 import javax.swing.*;
@@ -11,9 +9,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,10 +25,12 @@ public class PaintPanel extends JPanel {
     private int x;
     private int y;
     private Color selectedColor = Color.BLACK;
+    private float selectedStroke = 1.0f;
 
     private iWhiteboard whiteboard;
     private HashMap<String, String> userInfo;
 
+    private BufferedImage image;
 
     public PaintPanel() {
 
@@ -53,7 +54,7 @@ public class PaintPanel extends JPanel {
 
                 if (PaintType.TEXT.equals(type)) {
                     try {
-                        draw(x, y, 0, 0, type, selectedColor);
+                        draw(x, y, 0, 0, type, selectedColor, selectedStroke);
                     } catch (RemoteException remoteException) {
                         remoteException.printStackTrace();
                     }
@@ -67,7 +68,7 @@ public class PaintPanel extends JPanel {
                 int y1 = e.getY();
 
                 try {
-                    draw(x, y, x1, y1, type, selectedColor);
+                    draw(x, y, x1, y1, type, selectedColor, selectedStroke);
                 } catch (RemoteException remoteException) {
                     remoteException.printStackTrace();
                 }
@@ -89,14 +90,16 @@ public class PaintPanel extends JPanel {
 
     /**
      * Draw the shape by this user
-     * @param x, y, x1, y1
-     * @param type type of the shape
+     *
+     * @param x,    y, x1, y1
+     * @param type  type of the shape
      * @param color color of the shape
      * @throws RemoteException
      */
-    private void draw(int x, int y, int x1, int y1, String type, Color color) throws RemoteException {
+    private void draw(int x, int y, int x1, int y1, String type, Color color, Float stroke) throws RemoteException {
         Graphics2D g = (Graphics2D) getGraphics();
         g.setColor(color);
+        g.setStroke(new BasicStroke(stroke));
 
         Shape shape;
 
@@ -105,7 +108,7 @@ public class PaintPanel extends JPanel {
             if (Utils.isNotEmpty(input)) {
                 g.drawString(input, x, y);
             }
-            shape = new Shape(x, y, type, color, input);
+            shape = new Shape(x, y, type, color, input, stroke);
         } else {
 
             int height = Math.abs(y1 - y);
@@ -114,20 +117,20 @@ public class PaintPanel extends JPanel {
             switch (this.type) {
                 case PaintType.LINE:
                     g.drawLine(x, y, x1, y1);
-                    shape = new Shape(x, y, x1, y1, type, color);
+                    shape = new Shape(x, y, x1, y1, type, color, stroke);
                     break;
                 case PaintType.RECT:
                     g.drawRect(Math.min(x, x1), Math.min(y, y1), width, height);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height, type, color);
+                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height, type, color, stroke);
                     break;
                 case PaintType.CIRCLE:
                     int round = Math.max(width, height);
                     g.drawOval(Math.min(x, x1), Math.min(y, y1), round, round);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), round, round, type, color);
+                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), round, round, type, color, stroke);
                     break;
                 case PaintType.OVAL:
                     g.drawOval(Math.min(x, x1), Math.min(y, y1), width, height);
-                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height, type, color);
+                    shape = new Shape(Math.min(x, x1), Math.min(y, y1), width, height, type, color, stroke);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected value: " + type);
@@ -144,12 +147,14 @@ public class PaintPanel extends JPanel {
 
     /**
      * Update the shape drawn by other users
+     *
      * @param shape the shape object by other users
      */
     public void draw(Shape shape) {
         System.out.println(shape);
         Graphics2D g = (Graphics2D) getGraphics();
         Color color = shape.getColor();
+        Stroke stroke = new BasicStroke(shape.getStroke());
         int x = shape.getX();
         int y = shape.getY();
         int x1 = shape.getX1();
@@ -161,11 +166,11 @@ public class PaintPanel extends JPanel {
 
         System.out.println(g);
         g.setColor(color);
+        g.setStroke(stroke);
 
         if (PaintType.TEXT.equals(type)) {
             g.drawString(text, x, y);
         } else {
-
             switch (type) {
                 case PaintType.LINE:
                     g.drawLine(x, y, x1, y1);
@@ -186,15 +191,27 @@ public class PaintPanel extends JPanel {
 
     /**
      * Loads a list of shapes, for the total canvas
+     *
      * @param shapeList shape list
      */
-    public void loads(List<Shape> shapeList) {
+    public void loads(ArrayList<Shape> shapeList) {
         logger.log(Level.INFO, "Loads the whole canvas. ");
+        System.out.println(shapeList);
 
-        for (Shape shape : shapeList ) {
+        this.shapeList.clear();
+        this.shapeList.addAll(shapeList);
+
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (Shape shape : shapeList) {
             draw(shape);
         }
     }
+
     public void setType(String type) {
         logger.log(Level.INFO, "Type is changed to " + type);
         this.type = type;
@@ -203,6 +220,42 @@ public class PaintPanel extends JPanel {
     public void setSelectedColor(Color selectedColor) {
         logger.log(Level.INFO, "Color is changed to " + selectedColor.getRGB());
         this.selectedColor = selectedColor;
+    }
+
+    /**
+     * Paint to the image
+     *
+     * @return BufferedImage
+     */
+    public BufferedImage save() {
+        Dimension imageSize = this.getSize();
+        BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+
+        // Set the background color
+        graphics.setBackground(Color.WHITE);
+        graphics.fillRect(0, 0, imageSize.width, imageSize.height);
+        graphics.drawImage(image, 0, 0, this);
+
+        // Draw the shapes to the image
+        for (Shape shape : this.shapeList) {
+            shape.save(graphics);
+            graphics.drawImage(image, 0, 0, this);
+        }
+        graphics.dispose();
+        return image;
+    }
+
+
+    public void clear() {
+        shapeList.clear();
+
+        Dimension imageSize = this.getSize();
+        Graphics2D g = (Graphics2D) getGraphics();
+        g.clearRect(0, 0, imageSize.width, imageSize.height);
+
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, imageSize.width, imageSize.height);
     }
 
     public iWhiteboard getWhiteboard() {
@@ -223,5 +276,17 @@ public class PaintPanel extends JPanel {
 
     public ArrayList<Shape> getShapeList() {
         return shapeList;
+    }
+
+    public void setImage(BufferedImage image) {
+        this.image = image;
+    }
+
+    public float getSelectedStroke() {
+        return selectedStroke;
+    }
+
+    public void setSelectedStroke(float selectedStroke) {
+        this.selectedStroke = selectedStroke;
     }
 }

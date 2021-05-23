@@ -6,16 +6,15 @@ import service.iWhiteboard;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.rmi.RemoteException;
-import java.util.List;
 
 public class UserListPanel extends JPanel {
 
-    private JList<String> list;
-    private DefaultListModel<String> model;
+    private final JList<String> list;
+    private final DefaultListModel<String> model;
     private iWhiteboard whiteboard;
 
 
@@ -35,8 +34,6 @@ public class UserListPanel extends JPanel {
 
         if (isManager) {
             addKickUser();
-        } else {
-            list.setEnabled(false);
         }
 
         JScrollPane listScroller = new JScrollPane(list);
@@ -44,30 +41,44 @@ public class UserListPanel extends JPanel {
         add(listScroller);
 
         setPreferredSize(new Dimension(260, 260));
-        setBackground(Color.PINK);
         setVisible(true);
     }
 
 
     private void addKickUser() {
-        list.addListSelectionListener(e -> {
-            String username = list.getSelectedValue();
-
-            if (username.startsWith(Consts.Service.MGR_NAME)) {
-                return;
+        list.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
             }
 
-            int res = JOptionPane.showConfirmDialog(null,
-                    "Do you confirm to kick " + username,
-                    "Kick User",
-                    JOptionPane.YES_NO_OPTION);
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                System.out.println("====> " + e);
+                String username = list.getSelectedValue();
 
-            if (res == JOptionPane.YES_OPTION) {
-                try {
-                    whiteboard.removeUser(username.replace(Consts.Service.CLIENT_NAME, ""));
-                } catch (RemoteException remoteException) {
-                    remoteException.printStackTrace();
+                if (username.startsWith(Consts.Service.MGR_NAME)) {
+                    return;
                 }
+
+                int res = JOptionPane.showConfirmDialog(null,
+                        "Do you confirm to kick " + username,
+                        "Kick User",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (res == JOptionPane.YES_OPTION) {
+                    try {
+                        whiteboard.removeUser(username.replace(Consts.Service.CLIENT_NAME, ""),
+                                list.getSelectedIndex());
+                    } catch (RemoteException remoteException) {
+                        remoteException.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
             }
         });
     }

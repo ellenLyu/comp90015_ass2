@@ -60,14 +60,14 @@ public class Utils {
     }
 
 
-    public static boolean checkStartAppArgs(Map<String, String> dialogInput) {
+    public static boolean isValidStartAppArgs(Map<String, String> dialogInput) {
         // Check input port
         try {
             int port = Integer.parseInt(dialogInput.get(Consts.ServerView.PORT));
             logger.info("Port: " + port);
         } catch (NumberFormatException e) {
             Utils.popupErrMessage(Consts.Message.INVALID_PORT, Consts.Message.EXIT);
-            return false;
+            return true;
         }
 
         // Check input ip address
@@ -76,7 +76,7 @@ public class Utils {
             logger.info("Server IP: " + serverIP);
         } catch (UnknownHostException e) {
             Utils.popupErrMessage(Consts.Message.INVALID_IP, Consts.Message.EXIT);
-            return false;
+            return true;
         }
 
         // Check input ip address
@@ -84,9 +84,9 @@ public class Utils {
         logger.info("Username: " + username);
         if (!Utils.isNotEmpty(username)) {
             Utils.popupErrMessage(Consts.Message.INVALID_USERNAME, Consts.Message.EXIT);
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 }

@@ -4,10 +4,7 @@ import common.Consts;
 import common.Utils;
 import service.iUser;
 import service.iWhiteboard;
-import service.impl.ChatRunable;
-import service.impl.ShapeRunnable;
-import service.impl.ThreadPool;
-import service.impl.WhiteboardImpl;
+import service.impl.*;
 import view.CreateWhiteBoardView;
 import view.Shape;
 import view.StartAppDialog;
@@ -17,6 +14,8 @@ import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,13 +27,13 @@ import java.util.logging.Logger;
 public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
 
     private static final Logger logger = Logger.getLogger(CreateWhiteBoard.class.getName());
-    private CreateWhiteBoardView view;
     private final String userName;
     private final String serverRmi;
     private final String serviceName;
     private final int hostPort;
     private final String hostAddress;
     private final String clientServiceName;
+    private CreateWhiteBoardView view;
     private iWhiteboard whiteboard;
     private HashMap<String, String> userInfo = new HashMap<>();
     private ThreadPool threadPool;
@@ -61,7 +60,7 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
         Map<String, String> dialogInput = startAppDialog.showDialog();
 
         // Check input port
-        if (!Utils.checkStartAppArgs(dialogInput)) {
+        if (Utils.isValidStartAppArgs(dialogInput)) {
             return;
         }
 
@@ -86,6 +85,8 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
 
             WhiteboardImpl whiteboard = new WhiteboardImpl();
             this.whiteboard = whiteboard;
+
+            Registry registry = LocateRegistry.createRegistry(hostPort);
             Naming.bind("rmi://" + serverRmi + "/" + this.serviceName, whiteboard);
             System.out.println(whiteboard);
 
@@ -94,6 +95,7 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
             view = new CreateWhiteBoardView();
             view.setWhiteboard(whiteboard);
             view.setUserinfo(userInfo);
+            view.setUser(this);
 
             whiteboard.createRoom(this);
 
@@ -114,7 +116,6 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
     }
 
 
-
     @Override
     public boolean approve(String username) throws RemoteException {
         int res = JOptionPane.showOptionDialog(null,
@@ -127,18 +128,20 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
 
     @Override
     public void updateUserList(DefaultListModel<String> model) throws RemoteException {
-        view.updateList(model);
-    }
-
-    @Override
-    public void updateShape(Shape shape) throws RemoteException {
-        view.getPaintPanel().draw(shape);
+        System.out.println(model);
+        threadPool.execute(new UserListRunnable(view, model));
     }
 
     @Override
     public void load(List<Shape> shapeList) throws RemoteException {
-        view.getPaintPanel().loads(shapeList);
+        threadPool.execute(new ShapeRunnable(view, shapeList));
     }
+
+    @Override
+    public void updateShape(Shape shape) throws RemoteException {
+        threadPool.execute(new ShapeRunnable(view, shape));
+    }
+
 
     @Override
     public void leave(String str) throws RemoteException {
@@ -171,5 +174,9 @@ public class CreateWhiteBoard extends UnicastRemoteObject implements iUser {
 
     public CreateWhiteBoardView getView() {
         return view;
+    }
+
+    public void exit() {
+        System.exit(0);
     }
 }

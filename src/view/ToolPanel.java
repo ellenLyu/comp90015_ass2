@@ -19,10 +19,8 @@ public class ToolPanel extends JPanel {
         this.paintPanel = paintPanel;
 
         setBorder(new EmptyBorder(5, 5, 5, 5));
-//        setLayout(null);
 
         toolBar = new JToolBar();
-//        toolBar.setBounds(0, 0, 500, 20);
         toolBar.setFloatable(false);
 
         setBackground(Color.lightGray);
@@ -56,15 +54,41 @@ public class ToolPanel extends JPanel {
 
         JButton btnEraser = new JButton("Eraser");
         btnEraser.addActionListener(e -> paintPanel.setType(PaintType.ERASER));
-        toolBar.add(btnEraser);
+//        toolBar.add(btnEraser);
 
         // Color
         JButton btnColor = new JButton("Color");
+        btnColor.setOpaque(true);
+        btnColor.setBackground(selectedColor);
+        btnColor.setForeground(selectedColor);
+
         btnColor.addActionListener(e -> {
             selectedColor = JColorChooser.showDialog(null, "Please choose the color", selectedColor);
             btnColor.setBackground(selectedColor);
+            btnColor.setForeground(selectedColor);
             paintPanel.setSelectedColor(selectedColor);
         });
         toolBar.add(btnColor);
+
+        JLabel strokeLabel = new JLabel("Stroke:");
+        strokeLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
+        toolBar.add(strokeLabel);
+
+        JComboBox<String> strokeComboBox = new JComboBox<>();
+        strokeComboBox.setModel(new DefaultComboBoxModel<>(new String[]{"1.0", "1.2", "1.4", "1.6", "1.8", "2.0"}));
+        strokeComboBox.addActionListener(e -> {
+
+            String selected = (String) strokeComboBox.getSelectedItem();
+            Float selectStroke;
+
+            if (selected != null) {
+                selectStroke = Float.parseFloat(selected);
+            } else {
+                selectStroke = 1.0f;
+            }
+
+            paintPanel.setSelectedStroke(selectStroke);
+        });
+        toolBar.add(strokeComboBox);
     }
 }

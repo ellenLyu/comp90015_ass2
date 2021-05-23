@@ -1,7 +1,6 @@
 package view;
 
 import common.Consts;
-import common.Utils;
 import service.iWhiteboard;
 
 import javax.swing.*;
@@ -10,15 +9,17 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
 public class ChatPanel extends JPanel {
 
 
-    private JTextField inputField;
+    private final JTextField inputField;
 
-    private JTextPane chatPane;
+    private final JTextPane chatPane;
 
     private iWhiteboard whiteboard;
 
@@ -50,6 +51,7 @@ public class ChatPanel extends JPanel {
         add(scrollPane, gbc_ChatPane);
 
         inputField = new JTextField("Press ENTER...");
+        inputField.setForeground(Color.GRAY);
         inputField.setPreferredSize(new Dimension(200, 40));
         GridBagConstraints gbc_InputPane = new GridBagConstraints();
         gbc_InputPane.fill = GridBagConstraints.BOTH;
@@ -61,22 +63,39 @@ public class ChatPanel extends JPanel {
         this.addChatInput();
 
         setPreferredSize(new Dimension(200, 300));
-        setBackground(Color.ORANGE);
         setVisible(true);
     }
 
     public void appendMessage(String type, String username, String message) {
+        System.out.println(type + message);
         StyledDocument doc = chatPane.getStyledDocument();
         try {
-           doc.insertString(doc.getLength(), type, doc.getStyle("italic"));
-            doc.insertString(doc.getLength(), username, doc.getStyle("bold"));
-            doc.insertString(doc.getLength(), message + "\n", doc.getStyle("regular"));
+            if (Consts.Service.SERVER_NAME.equals(type)) {
+                doc.insertString(doc.getLength(), type, doc.getStyle("server"));
+                doc.insertString(doc.getLength(), message + "\n", doc.getStyle("server"));
+            } else {
+                doc.insertString(doc.getLength(), type, doc.getStyle("italic"));
+                doc.insertString(doc.getLength(), username + ": ", doc.getStyle("bold"));
+                doc.insertString(doc.getLength(), message + "\n", doc.getStyle("regular"));
+            }
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
     }
 
     private void addChatInput() {
+
+        inputField.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+                if ("Press ENTER...".equals(inputField.getText())) {
+                    inputField.setText("");
+                    inputField.setForeground(Color.BLACK);
+                }
+            }
+        });
 
         inputField.addKeyListener(new KeyAdapter() {
 
@@ -88,6 +107,7 @@ public class ChatPanel extends JPanel {
             public void keyPressed(KeyEvent e) {
 
                 if (KeyEvent.VK_ENTER == e.getKeyChar() && !"".equals(inputField.getText())) {
+
                     String input = inputField.getText();
                     try {
                         whiteboard.broadcast(userInfo.get(Consts.Service.USERNAME), input);
@@ -119,7 +139,6 @@ public class ChatPanel extends JPanel {
         StyleConstants.setBold(italic, true);
 
         Style server = doc.addStyle("server", regular);
-        StyleConstants.setBold(server, true);
         StyleConstants.setForeground(server, Color.BLUE);
 
     }

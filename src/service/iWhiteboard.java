@@ -11,21 +11,21 @@ import java.util.Map;
 public interface iWhiteboard extends Remote {
     void update(Shape shape, HashMap<String, String> userInfo) throws RemoteException;
 
+    void loadNewWhiteboard(List<Shape> shapeList) throws RemoteException;
+
     boolean isEmptyRoom() throws RemoteException;
 
     Map<String, Object> join(HashMap<String, String> userInfo) throws RemoteException;
 
-    boolean judge(String str) throws RemoteException;
-
-    void removeUser(String username) throws RemoteException;
+    void removeUser(String username, int selectedIdx) throws RemoteException;
 
     void broadcast(String from, String message) throws RemoteException;
 
     boolean existingName(String username) throws RemoteException;
 
-    void exit(String username) throws RemoteException;
+    void exit(String username, String userType) throws RemoteException;
 
-    void end() throws RemoteException;
+    void closeRoom() throws RemoteException;
 
     boolean createRoom(iUser manager) throws RemoteException;
 }

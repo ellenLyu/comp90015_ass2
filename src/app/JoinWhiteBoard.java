@@ -23,13 +23,13 @@ import java.util.Map;
 
 public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
 
-    private JoinWhiteBoardView view;
     private final String userName;
     private final String serverRmi;
     private final String serviceName;
     private final int hostPort;
     private final String hostAddress;
     private final String clientServiceName;
+    private JoinWhiteBoardView view;
     private service.iWhiteboard whiteboard;
     private HashMap<String, String> userInfo = new HashMap<>();
     private ThreadPool threadPool;
@@ -51,7 +51,7 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
         Map<String, String> dialogInput = startAppDialog.showDialog();
 
         // Check input port
-        if (!Utils.checkStartAppArgs(dialogInput)) {
+        if (Utils.isValidStartAppArgs(dialogInput)) {
             return;
         }
 
@@ -92,10 +92,11 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
             view = new JoinWhiteBoardView();
             view.setWhiteboard(whiteboard);
             view.setUserinfo(userInfo);
+            view.setUser(this);
             view.setVisible(true);
 
-            threadPool.execute(new ShapeRunnable(this, (List<Shape>) loadDataList.get("ShapeList")));
-            threadPool.execute(new UserListRunnable(this, (DefaultListModel<String>) loadDataList.get("UsernameList")));
+            threadPool.execute(new ShapeRunnable(view, (List<Shape>) loadDataList.get("ShapeList")));
+            threadPool.execute(new UserListRunnable(view, (DefaultListModel<String>) loadDataList.get("UsernameList")));
             System.out.println(whiteboard);
 
 
@@ -111,7 +112,6 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
     }
 
 
-
     @Override
     public boolean approve(String str) throws RemoteException {
         return false;
@@ -119,27 +119,31 @@ public class JoinWhiteBoard extends UnicastRemoteObject implements iUser {
 
     @Override
     public void updateUserList(DefaultListModel<String> model) throws RemoteException {
-        view.updateList(model);
-    }
-
-    @Override
-    public void updateShape(Shape shape) throws RemoteException {
-        view.getPaintPanel().draw(shape);
+        threadPool.execute(new UserListRunnable(view, model));
     }
 
     @Override
     public void load(List<Shape> shapeList) throws RemoteException {
-        view.getPaintPanel().loads(shapeList);
+        threadPool.execute(new ShapeRunnable(view, shapeList));
+    }
+
+    @Override
+    public void updateShape(Shape shape) throws RemoteException {
+        threadPool.execute(new ShapeRunnable(view, shape));
     }
 
     @Override
     public void leave(String message) throws RemoteException {
+
         try {
+            UnicastRemoteObject.unexportObject(this, true);
             Naming.unbind("rmi://" + serverRmi + "/" + this.userName);
         } catch (NotBoundException | MalformedURLException e) {
             e.printStackTrace();
         }
-        Utils.popupErrMessage(message, Consts.Message.EXIT);
+        if (message != null) {
+            Utils.popupErrMessage(message, Consts.Message.EXIT);
+        }
     }
 
     @Override

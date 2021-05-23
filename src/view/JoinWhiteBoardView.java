@@ -1,9 +1,14 @@
 package view;
 
+import app.JoinWhiteBoard;
+import common.Consts;
 import service.iWhiteboard;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 
 public class JoinWhiteBoardView {
@@ -19,6 +24,11 @@ public class JoinWhiteBoardView {
     private final ChatPanel chatPanel;
 
     private final JTextArea errorMessageArea;
+
+    private JoinWhiteBoard user;
+
+    private iWhiteboard iWhiteboard;
+
 
     public JoinWhiteBoardView() {
 
@@ -52,7 +62,7 @@ public class JoinWhiteBoardView {
         gbc_ToolPanel.gridy = 0;
         gbc_ToolPanel.gridwidth = 1;
         toolPanel = new ToolPanel(paintPanel);
-        toolPanel.setBounds(0, 0,  500, 30);
+        toolPanel.setBounds(0, 0, 500, 30);
         toolPanel.setVisible(true);
         frame.getContentPane().add(toolPanel, gbc_ToolPanel);
 
@@ -77,7 +87,25 @@ public class JoinWhiteBoardView {
         errorMessageArea = new JTextArea();
         errorMessageArea.setBounds(10, 284, 434, 91);
 
+
+        addClose();
+        frame.setResizable(false);
         frame.setVisible(true);
+    }
+
+
+    private void addClose() {
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    iWhiteboard.exit(user.getUsername(), Consts.Service.CLIENT_NAME);
+                } catch (RemoteException remoteException) {
+                    remoteException.printStackTrace();
+                }
+                e.getWindow().dispose();
+            }
+        });
     }
 
     public PaintPanel getPaintPanel() {
@@ -85,8 +113,10 @@ public class JoinWhiteBoardView {
     }
 
     public void setWhiteboard(iWhiteboard whiteboard) {
+        this.iWhiteboard = whiteboard;
         this.paintPanel.setWhiteboard(whiteboard);
         this.userListPanel.setWhiteboard(whiteboard);
+        this.chatPanel.setWhiteboard(whiteboard);
     }
 
     public void setUserinfo(HashMap<String, String> userInfo) {
@@ -96,7 +126,7 @@ public class JoinWhiteBoardView {
     }
 
     public void appendChat(String type, String from, String message) {
-        chatPanel.appendMessage(type,from, message);
+        chatPanel.appendMessage(type, from, message);
     }
 
     public void setVisible(boolean visible) {
@@ -105,5 +135,13 @@ public class JoinWhiteBoardView {
 
     public void updateList(DefaultListModel<String> model) {
         userListPanel.updateList(model);
+    }
+
+    public JoinWhiteBoard getUser() {
+        return user;
+    }
+
+    public void setUser(JoinWhiteBoard user) {
+        this.user = user;
     }
 }
